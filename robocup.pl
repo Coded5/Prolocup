@@ -102,7 +102,7 @@ clamp(Value, _, _, Value).
 distance_to_goal(Team, Id, Distance):-
     player_state(Team, Id, _, X, _),
     goal_target(Team, X_target, _),
-    Distance is abs(X6 - X_target), !.
+    Distance is abs(X - X_target), !.
 
 step_towards(X, Y, TX, TY, NX, NY) :-
     DX0 is TX - X,
