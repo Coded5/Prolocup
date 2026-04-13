@@ -42,6 +42,9 @@ home_position(team2, 5, forward, 65, 43).
 
 initial_ball(52, 34).       % middle of the field
 
+opponent(team1, team2).
+opponent(team2, team1).
+
 % load only player positions
 load_player_positions :-
     forall(
@@ -98,6 +101,12 @@ sign(0, 0).
 clamp(Value, Min, _Max, Min) :- Value < Min, !.
 clamp(Value, _Min, Max, Max) :- Value > Max, !.
 clamp(Value, _, _, Value).
+
+distance(X1, Y1, X2, Y2, Distance) :-
+    DX is X2 - X1,
+    DY is Y2 - Y1,
+    SUM is DX * DX + DY * DY,
+    sqrt(SUM, Distance).
 
 distance_to_goal(Team, Id, Distance):-
     player_state(Team, Id, _, X, _),
@@ -164,9 +173,22 @@ dribble_towards_goal(Team, Id) :-
 
 % ==== Need Implementations ====
 pass_ball(Team, Id, forward).
-move_player(Team, Id, TX, TY).
 % ==============================
 
+move_player(Team, Id, TX, TY) :-
+    player_state(Team, Id, Role, X, Y),
+    player_stats(Team, Id, Speed, _),
+    distance(X, Y, TX, TY, Distance),
+
+    ( Distance =< Speed -> 
+        update_player(Team, Id, Role, TX, TY) ;
+
+        % move toward point (TX, TY) for (Speed) units
+        XX is (TX - X) / Distance * Speed,
+        YY is (TY - Y) / Distance * Speed,
+
+        update_player(Team, Id, Role, XX, YY)
+    ).
 
 % Forward
 
