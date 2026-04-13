@@ -99,4 +99,91 @@ clamp(Value, Min, _Max, Min) :- Value < Min, !.
 clamp(Value, _Min, Max, Max) :- Value > Max, !.
 clamp(Value, _, _, Value).
 
+distance_to_goal(Team, Id, Distance):-
+    player_state(Team, Id, _, X, _),
+    goal_target(Team, X_target, _),
+    Distance is abs(X6 - X_target), !.
 
+step_towards(X, Y, TX, TY, NX, NY) :-
+    DX0 is TX - X,
+    DY0 is TY - Y,
+    sign(DX0, DX),
+    sign(DY0, DY),
+    field(MaxX, MaxY),
+    X1 is X + DX,
+    Y1 is Y + DY,
+    clamp(X1, 0, MaxX, NX),
+    clamp(Y1, 0, MaxY, NY).
+
+advance_ball(X, Y, _, _, 0, X, Y) :- !.
+advance_ball(X, Y, Target_X, Target_Y, Steps, New_X, New_Y):-
+    Steps > 0,
+    step_towards(X, Y, Target_X, Target_Y, X1, Y1),
+    S1 is Steps - 1,
+    advance_ball(X1, Y1, Target_X, Target_Y, S1, New_X, New_Y).
+
+update_player(Team, Id, Role, NewX, NewY) :-
+    retract(player_state(Team, Id, Role, _, _)),
+    assertz(player_state(Team, Id, Role, NewX, NewY)).
+
+update_ball(NewX, NewY) :-
+    retract(ball_state(_, _)),
+    assertz(ball_state(NewX, NewY)).
+
+clear_possession :-
+    retractall(possession(_, _)),
+    assertz(possession(none, none)).
+
+% Actions
+
+shoot_ball(Team, Id):-
+    possession(Team, Id),
+    ball_state(BX, BY),
+    goal_target(Team, GX, _),
+    goal_range(GY1, GY2),
+    MinGY is GY1 -5,
+    MaxGY is GY2 + 5,
+    random_between(MinGY, MaxGY, RandomGY),
+    player_stats(Team, Id, _, Power),
+    MinP is Power // 2,
+    random_between(MinP, Power, RandomPower),
+    advance_ball(BX, BY, GX, RandomGY, RandomPower, NBX, NBY),
+    update_ball(NBX, NBY),
+    clear_possession,
+    format('~w player ~w shoots the ball to (~w, ~w) [PWR ~w].~n', [Team, Id, NBX, NBY, RandomPower]).
+
+dribble_towards_goal(Team, Id) :-
+    possession(Team, Id),
+    player_state(Team, Id, Role, X, Y),
+    player_stats(Team, Id, Speed, _),
+    goal_target(Team, GX, GY),
+    advance_ball(X, Y, GX, GY, Speed, NX, NY),
+    update_player(Team, Id, Role, NX, NY),
+    update_ball(NX, NY),
+    format('~w player ~w dribbles to (~w, ~w).~n', [Team, Id, NX, NY]).
+
+% ==== Need Implementations ====
+pass_ball(Team, Id, forward).
+move_player(Team, Id, TX, TY).
+% ==============================
+
+
+% Forward
+
+forward_action(Team, Id):-
+    ( possession(Team, Id) ->
+        distance_to_goal(Team, Id, Distance),
+        ( Distance =< 25 -> 
+            shoot_ball(Team, Id)
+        ;
+            random_between(0, 1, X),
+            ( X = 0 ->
+                pass_ball(Team, Id, forward) 
+            ;   
+                dribble_towards_goal(Team, Id)
+            )
+        )
+    ;
+        ball_state(BX, BY),
+        move_player(Team, Id, BX, BY)
+    ).
