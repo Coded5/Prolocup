@@ -2,7 +2,7 @@ from pyswip import Prolog
 import pygame
 
 WIDTH, HEIGHT = 1280, 720
-FPS = 60
+FPS = 1
 
 FIELD_WIDTH = 105
 FIELD_HEIGHT = 68
@@ -66,6 +66,8 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
 
+        list(game.prolog.query('main_loop(1)'))
+        game.fetch_game_state()
         # draw start
 
         screen.fill(FIELD_COLOR)

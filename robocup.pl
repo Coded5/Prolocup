@@ -12,20 +12,20 @@ goal_range(30, 38).       % Range of y axis for goal
 
 goal_target(team1, 105, 34).       % center of goal for team1 to kick into
 goal_target(team2, 0, 34).         % center of goal for team2 to kick into
-goalkepper_radius(10)              % radius from goal center where goalkeeper stay in
+goalkepper_radius(10).              % radius from goal center where goalkeeper stay in
 
 % random stat generator by role
 random_profile(goalkeeper, Speed, Power) :-
     random_between(1, 3, Speed),
-    random_between(30, 40, Power).
+    random_between(3, 4, Power).
 
 random_profile(defender, Speed, Power) :-
     random_between(2, 4, Speed),
-    random_between(10, 20, Power).
+    random_between(1, 2, Power).
 
 random_profile(forward, Speed, Power) :-
     random_between(3, 5, Speed),
-    random_between(15, 25, Power).
+    random_between(3, 4, Power).
 
 % here we initialize the position of players and ball
 
@@ -214,7 +214,6 @@ forward_action(Team, Id):-
 % Goalkeeper
 
 goalkeeper_action(Team, Id):-
-    player_state(Team, Id, goalkeeper, X, Y)    % role checl
     (
         possession(Team, Id) ->                 % possess ball then kick away from goal
         shoot_ball(Team, Id)         
@@ -234,3 +233,41 @@ goalkeeper_action(Team, Id):-
                 move_player(Team, Id, EX, EY)  
         )
     ).
+
+% defender
+
+defender_action(_, _).         % TODO    
+
+
+% main_loop
+main_loop(0) :- !, format('Game over.~n').
+main_loop(Turnsleft) :-     % TODO: change number of turn to goal score logic instead
+    
+    % randomize player
+    findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),
+    length(Players, Player_Count),
+    random_between(1, Player_Count, Random_Id),
+    nth1(Random_Id, Players, (Chosen_Team, Chosen_Id, Chosen_Role)),
+    
+    
+    %   check possession
+    update_possession(Team, Id),
+    (
+        Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id);
+        Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id);
+        Chosen_Role = defender -> defender_action(Chosen_Team, Chosen_Id)
+    ),
+    
+    % TODO : goal scoring logic instead of number of turns
+    Turnsleft is Turnsleft -1,  % placeholder logic
+    main_loop(Turnsleft).
+
+update_possession(Team, Id):-       % when turn start, check if player can possess ball
+    ball_state(BX, BY),
+    player_state(Team, Id, _, PX, PY),
+    distance(PX, PY, BX, BY, D),
+    D < 1,
+    retractall(possession(_,_)),
+    assertz(possession(Team, Id)),
+    !.
+update_possession(_,_).
