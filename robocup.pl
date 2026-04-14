@@ -12,6 +12,7 @@ goal_range(30, 38).       % Range of y axis for goal
 
 goal_target(team1, 105, 34).       % center of goal for team1 to kick into
 goal_target(team2, 0, 34).         % center of goal for team2 to kick into
+goalkepper_radius(10)              % radius from goal center where goalkeeper stay in
 
 % random stat generator by role
 random_profile(goalkeeper, Speed, Power) :-
@@ -208,4 +209,28 @@ forward_action(Team, Id):-
     ;
         ball_state(BX, BY),
         move_player(Team, Id, BX, BY)
+    ).
+
+% Goalkeeper
+
+goalkeeper_action(Team, Id):-
+    player_state(Team, Id, goalkeeper, X, Y)    % role checl
+    (
+        possession(Team, Id) ->                 % possess ball then kick away from goal
+        shoot_ball(Team, Id)         
+        ;
+        goal_target(Team, GX, GY),              % dont possess ball then move towards ball
+        ball_state(BX, BY),
+        distance(GX, GY, BX, BY, G_B_Dist),
+        goalkepper_radius(R),
+
+        (   R >= G_B_Dist ->                     
+                move_player(Team, Id, BX, BY)   % ball inside active zone then run to ball
+            ;
+                DX is BX - GX,                  % run towards ball but stay inside zone
+                DY is BY - GY,
+                EX is GX + (DX / G_B_Dist) * R,   % edge of allowed radus 
+                EY is GY + (DY / G_B_Dist) * R,
+                move_player(Team, Id, EX, EY)  
+        )
     ).
