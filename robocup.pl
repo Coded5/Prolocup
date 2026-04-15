@@ -1,3 +1,4 @@
+use_module(library(random)).
 % setting them to dynamic so we can change them via retract and assert
 
 :- dynamic player_state/5.
@@ -133,12 +134,18 @@ advance_ball(X, Y, Target_X, Target_Y, Steps, New_X, New_Y):-
     advance_ball(X1, Y1, Target_X, Target_Y, S1, New_X, New_Y).
 
 update_player(Team, Id, Role, NewX, NewY) :-
+    field(Width, Height),
+    clamp(NewX, 0, Width, XX),
+    clamp(NewY, 0, Height, YY),
     retract(player_state(Team, Id, Role, _, _)),
-    assertz(player_state(Team, Id, Role, NewX, NewY)).
+    assertz(player_state(Team, Id, Role, XX, YY)).
 
 update_ball(NewX, NewY) :-
+    field(Width, Height),
+    clamp(NewX, 0, Width, XX),
+    clamp(NewY, 0, Height, YY),
     retract(ball_state(_, _)),
-    assertz(ball_state(NewX, NewY)).
+    assertz(ball_state(XX, YY)).
 
 clear_possession :-
     retractall(possession(_, _)),
@@ -173,7 +180,26 @@ dribble_towards_goal(Team, Id) :-
     format('~w player ~w dribbles to (~w, ~w).~n', [Team, Id, NX, NY]).
 
 % ==== Need Implementations ====
-pass_ball(Team, Id, forward).
+pass_ball(Team, Id, Role) :- 
+    findall((Team, I, Role), (player_state(Team, I, Role, _, _), Id \= I), Players),
+    random_member((_, PassId, _), Players),
+
+    player_state(Team, Id, Role, X1, Y1),
+    player_stats(Team, Id, _Speed, Power),
+
+    player_state(Team, PassId, Role, X2, X2),
+
+    distance(X1, Y1, X2, Y2, Distance),
+
+    (
+        Distance =< Power -> update_ball(X2, Y2) ;
+        advance_ball(X1, Y1, X2, Y2, Power, BX, BY)
+    ),
+    update_ball(BX, BY).
+
+
+
+    
 % ==============================
 
 move_player(Team, Id, TX, TY) :-
@@ -242,7 +268,12 @@ defender_action(_, _).         % TODO
 % main_loop
 main_loop(0) :- !, format('Game over.~n').
 main_loop(Turnsleft) :-     % TODO: change number of turn to goal score logic instead
-    
+    step,
+    % TODO : goal scoring logic instead of number of turns
+    Next is Turnsleft - 1,  % placeholder logic
+    main_loop(Next).
+
+step :-
     % randomize player
     findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),
     length(Players, Player_Count),
@@ -256,11 +287,7 @@ main_loop(Turnsleft) :-     % TODO: change number of turn to goal score logic in
         Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id);
         Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id);
         Chosen_Role = defender -> defender_action(Chosen_Team, Chosen_Id)
-    ),
-    
-    % TODO : goal scoring logic instead of number of turns
-    Turnsleft is Turnsleft -1,  % placeholder logic
-    main_loop(Turnsleft).
+    ).
 
 update_possession(Team, Id):-       % when turn start, check if player can possess ball
     ball_state(BX, BY),
