@@ -187,7 +187,7 @@ pass_ball(Team, Id, Role) :-
     player_state(Team, Id, Role, X1, Y1),
     player_stats(Team, Id, _Speed, Power),
 
-    player_state(Team, PassId, Role, X2, X2),
+    player_state(Team, PassId, Role, X2, Y2),
 
     distance(X1, Y1, X2, Y2, Distance),
 
@@ -211,8 +211,8 @@ move_player(Team, Id, TX, TY) :-
         update_player(Team, Id, Role, TX, TY) ;
 
         % move toward point (TX, TY) for (Speed) units
-        XX is (TX - X) / Distance * Speed,
-        YY is (TY - Y) / Distance * Speed,
+        XX is X + (TX - X) / Distance * Speed,
+        YY is Y + (TY - Y) / Distance * Speed,
 
         update_player(Team, Id, Role, XX, YY)
     ).
@@ -282,7 +282,7 @@ step :-
     
     
     %   check possession
-    update_possession(Team, Id),
+    update_possession(Chosen_Team, Chosen_Id),
     (
         Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id);
         Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id);

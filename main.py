@@ -2,7 +2,7 @@ from pyswip import Prolog
 import pygame
 
 WIDTH, HEIGHT = 1280, 720
-FPS = 1
+FPS = 20
 
 FIELD_WIDTH = 105
 FIELD_HEIGHT = 68
