@@ -33,7 +33,8 @@ class PrologGameState:
         self.ball_position = (ball_position['X'], ball_position['Y'])
         self.player_states = list(self.prolog.query('player_state(Team, Id, Role, X, Y)'))
 
-
+    def step(self):
+        list(self.prolog.query('step'))
 
     def query(self, query):
         result = list(self.prolog.query(query))
@@ -56,6 +57,7 @@ def main():
     clock = pygame.time.Clock()
 
     running = True
+    timer = 60
 
     while running:
         for event in pygame.event.get():
@@ -66,8 +68,8 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
 
-        list(game.prolog.query('main_loop(1)'))
-        game.fetch_game_state()
+        # list(game.prolog.query('main_loop(1)'))
+        # game.fetch_game_state()
         # draw start
 
         screen.fill(FIELD_COLOR)
@@ -78,6 +80,9 @@ def main():
                 (CENTER_OFFSET_X, CENTER_OFFSET_Y, 105 * SCALE, 68 * SCALE)
                 , 3, 1
         )
+
+        game.step()
+        game.fetch_game_state()
 
         pygame.draw.line(screen, WHITE, field_to_screen((FIELD_WIDTH // 2, 0)), field_to_screen((FIELD_WIDTH // 2, FIELD_HEIGHT)), 3)
 
@@ -91,11 +96,12 @@ def main():
 
             pygame.draw.circle(screen, color, field_to_screen((x, y)), 8)
 
-
-
         pygame.draw.circle(screen, WHITE, field_to_screen(game.ball_position), 5) 
         # draw end
+        
+        timer -= 1
 
+        
         clock.tick(FPS)
         pygame.display.flip()
 
