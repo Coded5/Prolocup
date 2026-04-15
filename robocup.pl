@@ -192,10 +192,15 @@ pass_ball(Team, Id, Role) :-
     distance(X1, Y1, X2, Y2, Distance),
 
     (
-        Distance =< Power -> update_ball(X2, Y2) ;
-        advance_ball(X1, Y1, X2, Y2, Power, BX, BY)
+        Distance =< Power -> 
+            update_ball(X2, Y2)
+        ;
+            advance_ball(X1, Y1, X2, Y2, Power, BX, BY),
+            update_ball(BX, BY)
     ),
-    update_ball(BX, BY).
+    retractall(possession(_, _)),
+    assertz(possession(Team, PassId)),
+    format('~w player ~w passes to ~w.~n', [Team, Id, PassId]).
 
 
 

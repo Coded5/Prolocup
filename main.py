@@ -2,7 +2,7 @@ from pyswip import Prolog
 import pygame
 
 WIDTH, HEIGHT = 1280, 720
-FPS = 20
+FPS = 30
 
 FIELD_WIDTH = 105
 FIELD_HEIGHT = 68
@@ -57,7 +57,7 @@ def main():
     clock = pygame.time.Clock()
 
     running = True
-    timer = 60
+    timer = 9999
 
     while running:
         for event in pygame.event.get():
