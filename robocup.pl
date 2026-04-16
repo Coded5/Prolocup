@@ -15,7 +15,7 @@ goal_target(team1, 105, 34).       % center of goal for team1 to kick into
 goal_target(team2, 0, 34).         % center of goal for team2 to kick into
 goalkepper_radius(10).              % radius from goal center where goalkeeper stay in
 
-win_target(3).      % number of goals to win
+win_target(1).      % number of goals to win - temporarily 1
 
 % random stat generator by role
 random_profile(goalkeeper, Speed, Power) :-
@@ -315,10 +315,17 @@ check_goal :-
 
 % main_loop
 main_loop(0) :- !, format('Game over.~n').
-main_loop(Turnsleft) :-     % TODO: change number of turn to goal score logic instead
-    step,
-    % TODO : goal scoring logic instead of number of turns
-    Next is Turnsleft - 1,  % placeholder logic
+main_loop(Turnsleft) :-     % start game with max number of turns, stop when a team wins or when run out of turns
+    score(Score1, Score2),
+    win_target(Score),
+    ( (Score1 == Score) ->
+        format('Team 1 wins! ~n'),
+        Next is 0
+    ; (Score2 == Score) ->
+        format('Team 2 wins! ~n'),
+        Next is 0
+    ; Next is Turnsleft - 1
+    ),
     main_loop(Next).
 
 step :-
