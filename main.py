@@ -1,3 +1,4 @@
+from pygame.cursors import ball
 from pyswip import Prolog
 import pygame
 
@@ -16,12 +17,16 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 
+LERP_TIME = 0.2
+
 class PrologGameState:
     def __init__(self):
         self.prolog = Prolog()
         self.prolog.consult('./robocup.pl')
         list(self.prolog.query('init_game'))
 
+        self.game_states = []
+        self.fetch_game_state()
         self.fetch_game_state()
 
     def fetch_game_state(self):
@@ -30,11 +35,33 @@ class PrologGameState:
         if ball_position is None:
             return
 
-        self.ball_position = (ball_position['X'], ball_position['Y'])
-        self.player_states = list(self.prolog.query('player_state(Team, Id, Role, X, Y)'))
+        state = {
+                "ball_x": ball_position['X'],
+                "ball_y": ball_position['Y'],
+        }
+
+        players = {}
+        for player in list(self.prolog.query('player_state(Team, Id, Role, X, Y)')):
+            team = player['Team'] # Team1, Team2
+            id = player['Id']
+            role = player['Role']
+            x = player['X']
+            y = player['Y']
+
+            players[f"{team}_{id}"] = {
+                "team" : team, # Team1, Team2,
+                "id" : id,
+                "role" : role,
+                "x" : x,
+                "y" : y
+            }
+
+        state['players'] = players
+
+        self.game_states.append(state)
 
     def step(self):
-        list(self.prolog.query('step'))
+        list(self.prolog.query('main_loop(10)'))
 
     def query(self, query):
         result = list(self.prolog.query(query))
@@ -47,6 +74,9 @@ class PrologGameState:
 def field_to_screen(position):
     return (CENTER_OFFSET_X + position[0] * SCALE, CENTER_OFFSET_Y + position[1] * SCALE)
 
+def lerp(a, b, t):
+    return a + t * (b - a)
+
 def main():
     game = PrologGameState()
 
@@ -56,8 +86,10 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
 
+    lerp_t = 1
+
     running = True
-    timer = 9999
+    autoplay = False
 
     while running:
         for event in pygame.event.get():
@@ -67,10 +99,12 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-
-        # list(game.prolog.query('main_loop(1)'))
-        # game.fetch_game_state()
-        # draw start
+                if event.key == pygame.K_k:
+                    game.step()
+                    game.fetch_game_state()
+                    lerp_t = 0
+                if event.key == pygame.K_p:
+                    autoplay = True
 
         screen.fill(FIELD_COLOR)
 
@@ -81,26 +115,79 @@ def main():
                 , 3, 1
         )
 
-        game.step()
-        game.fetch_game_state()
-
         pygame.draw.line(screen, WHITE, field_to_screen((FIELD_WIDTH // 2, 0)), field_to_screen((FIELD_WIDTH // 2, FIELD_HEIGHT)), 3)
 
         pygame.draw.circle(screen, WHITE, field_to_screen((FIELD_WIDTH // 2, FIELD_HEIGHT // 2)), 60, 2)
 
-        for player in game.player_states:
-            color = RED if player['Team'] == 'team1' else BLUE
-            x = player['X']
-            y = player['Y']
-            # role = player['Role'][:3]
+        # Left Rect
+        pygame.draw.rect(
+                screen,
+                WHITE,
+                (CENTER_OFFSET_X, CENTER_OFFSET_Y + (68 * SCALE //4), 105 * SCALE // 5, 68 * SCALE // 2),
+                3, 1
+                )
+        
+        # Right rect
+        pygame.draw.rect(
+                screen,
+                WHITE,
+                (CENTER_OFFSET_X + 105 * SCALE // 5 * 4,CENTER_OFFSET_Y + (68 * SCALE //4), 105 * SCALE // 5, 68 * SCALE // 2),
+                3, 1
+                )
 
+        # Left goal
+        pygame.draw.rect(
+                screen,
+                WHITE,
+                (
+                    CENTER_OFFSET_X - (5 * SCALE),
+                    CENTER_OFFSET_Y + (68 - 20) * SCALE // 2,
+                    5 * SCALE,
+                    20 * SCALE
+                )
+        )
+
+        # Right goal
+        pygame.draw.rect(
+                screen,
+                WHITE,
+                (
+                    CENTER_OFFSET_X + 105 * SCALE,
+                    CENTER_OFFSET_Y + (68 - 20) * SCALE // 2,
+                    5 * SCALE,
+                    20 * SCALE
+                )
+        )
+
+        prev = game.game_states[-2]
+        curr = game.game_states[-1]
+
+        ball = (
+            lerp(prev['ball_x'], curr['ball_x'], lerp_t),
+            lerp(prev['ball_y'], curr['ball_y'], lerp_t)
+        )
+
+        lerp_t += (1 / (FPS * LERP_TIME))
+        lerp_t = min(1, lerp_t)
+        
+        for player in game.game_states[-1]['players'].keys():
+            curr_player = curr['players'][player]
+            prev_player = prev['players'][player]
+
+            color = RED if curr_player['team'] == 'team1' else BLUE
+
+            x = lerp(prev_player['x'], curr_player['x'], lerp_t)
+            y = lerp(prev_player['y'], curr_player['y'], lerp_t)
             pygame.draw.circle(screen, color, field_to_screen((x, y)), 8)
 
-        pygame.draw.circle(screen, WHITE, field_to_screen(game.ball_position), 5) 
-        # draw end
-        
-        timer -= 1
 
+        pygame.draw.circle(screen, WHITE, field_to_screen(ball), 5) 
+        # draw end
+
+        if lerp_t >= 1 and autoplay:
+            game.step()
+            game.fetch_game_state()
+            lerp_t = 0
         
         clock.tick(FPS)
         pygame.display.flip()
