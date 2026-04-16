@@ -104,7 +104,7 @@ clamp(Value, Min, _Max, Min) :- Value < Min, !.
 clamp(Value, _Min, Max, Max) :- Value > Max, !.
 clamp(Value, _, _, Value).
 
-% check if (ball) X position on same side as player
+% check if (ball) X position on same side as player's team
 on_same_side(team1, X) :- X =< 52.
 on_same_side(team2, X) :- X >= 52.
 
@@ -273,11 +273,12 @@ goalkeeper_action(Team, Id):-
 
 defender_action(Team, Id) :-
     (
-        possession(Team, Id) ->                 % if possess the ball then try to pass to forward
+        possession(Team, Id) ->                             % if possess the ball then try to pass to forward
         pass_ball(Team, Id, forward)
-        ; (ball_state(BX, BY), on_same_side(Team, BX)) ->     % if not possess ball but ball on same side, try to run to it
+
+        ; (ball_state(BX, BY), on_same_side(Team, BX)) ->   % if not possess ball but ball on same side, try to run to it
             move_player(Team , Id, BX, BY)
-        ; home_position(Team, Id, defender, _, HY),     % if ball on other side run to wait at half line
+        ; home_position(Team, Id, defender, _, HY),         % if ball on other side run to wait at half line
             move_player(Team, Id, 52, HY)
     ).    
 
