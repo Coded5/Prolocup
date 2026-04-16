@@ -160,12 +160,14 @@ update_score(team1) :-      % +1 score to the team that goaled
     score(Score1, Score2),
     NewScore1 is Score1 + 1,
     retract(score(_,_)),
-    assertz(score(NewScore1, Score2)).
+    assertz(score(NewScore1, Score2)),
+    format('Current Score: ~w - ~w ~n', [NewScore1, Score2]).
 update_score(team2) :-
     score(Score1, Score2),
     NewScore2 is Score2 + 1,
     retract(score(_,_)),
-    assertz(score(Score1, NewScore2)).
+    assertz(score(Score1, NewScore2)),
+    format('Current Score: ~w - ~w ~n', [Score1, NewScore2]).
 
 % Actions
 
