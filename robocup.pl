@@ -106,8 +106,14 @@ clamp(Value, Min, _Max, Min) :- Value < Min, !.
 clamp(Value, _Min, Max, Max) :- Value > Max, !.
 clamp(Value, _, _, Value).
 
-on_same_side(team1, X) :- X =< 52.  % check if (ball) X position on same side as player's team
-on_same_side(team2, X) :- X >= 52.
+on_same_side(team1, X) :- % check if (ball) X position on same side as player's team
+    field(FieldX,_),
+    MidFieldX is FieldX // 2,
+    X =< MidFieldX.  
+on_same_side(team2, X) :- 
+    field(FieldX,_),
+    MidFieldX is FieldX // 2,
+    X >= MidFieldX.
 
 distance(X1, Y1, X2, Y2, Distance) :-
     DX is X2 - X1,
@@ -293,10 +299,10 @@ defender_action(Team, Id) :-
 
         ; (ball_state(BX, BY), on_same_side(Team, BX)) ->   % if not possess ball but ball on same side, try to run to it
             move_player(Team , Id, BX, BY)
-        ; home_position(Team, Id, defender, _, HY),         % if ball on other side run to wait at half line
+        ; home_position(Team, Id, defender, HX, HY),         % if ball on other side run to wait at half line
             field(X, _),
             MidX is X // 2,
-            move_player(Team, Id, MidX, HY)
+            move_player(Team, Id, HX, HY)
     ).    
 
 % scoring logic
