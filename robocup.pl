@@ -15,6 +15,8 @@ goal_target(team1, 105, 34).       % center of goal for team1 to kick into
 goal_target(team2, 0, 34).         % center of goal for team2 to kick into
 goalkepper_radius(10).              % radius from goal center where goalkeeper stay in
 
+win_target(3).      % number of goals to win
+
 % random stat generator by role
 random_profile(goalkeeper, Speed, Power) :-
     random_between(1, 3, Speed),
@@ -104,8 +106,7 @@ clamp(Value, Min, _Max, Min) :- Value < Min, !.
 clamp(Value, _Min, Max, Max) :- Value > Max, !.
 clamp(Value, _, _, Value).
 
-% check if (ball) X position on same side as player's team
-on_same_side(team1, X) :- X =< 52.
+on_same_side(team1, X) :- X =< 52.  % check if (ball) X position on same side as player's team
 on_same_side(team2, X) :- X >= 52.
 
 distance(X1, Y1, X2, Y2, Distance) :-
@@ -154,6 +155,17 @@ update_ball(NewX, NewY) :-
 clear_possession :-
     retractall(possession(_, _)),
     assertz(possession(none, none)).
+
+update_score(team1) :-      % +1 score to the team that goaled
+    score(Score1, Score2),
+    NewScore1 is Score1 + 1,
+    retract(score(_,_)),
+    assertz(score(NewScore1, Score2)).
+update_score(team2) :-
+    score(Score1, Score2),
+    NewScore2 is Score2 + 1,
+    retract(score(_,_)),
+    assertz(score(Score1, NewScore2)).
 
 % Actions
 
@@ -279,9 +291,25 @@ defender_action(Team, Id) :-
         ; (ball_state(BX, BY), on_same_side(Team, BX)) ->   % if not possess ball but ball on same side, try to run to it
             move_player(Team , Id, BX, BY)
         ; home_position(Team, Id, defender, _, HY),         % if ball on other side run to wait at half line
-            move_player(Team, Id, 52, HY)
+            field(X, _),
+            MidX is X // 2,
+            move_player(Team, Id, MidX, HY)
     ).    
 
+% scoring logic
+check_goal :- 
+    ball_state(BX, BY),
+    goal_range(MinY, MaxY),
+    ((BX == 105, BY >= MinY, BY =< MaxY) ->
+        format('GOAL for team1!~n'),
+        update_score(team1),
+        reset_after_goal
+    ; (BX == 0, BY >= MinY, BY =< MaxY) ->
+        format('GOAL for team2!~n'),
+        update_score(team2),
+        reset_after_goal
+    ; true
+    ).   
 
 % main_loop
 main_loop(0) :- !, format('Game over.~n').
@@ -292,6 +320,7 @@ main_loop(Turnsleft) :-     % TODO: change number of turn to goal score logic in
     main_loop(Next).
 
 step :-
+    check_goal,
     % randomize player
     findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),
     length(Players, Player_Count),
