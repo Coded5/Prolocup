@@ -281,7 +281,7 @@ forward_action(Team, Id):-
 goalkeeper_action(Team, Id):-
     (
         possession(Team, Id) ->                 % possess ball then kick away from goal
-        shoot_ball(Team, Id)         
+        clear_ball(Team, Id)         
         ;
         goal_target(Op_Team, GX, GY),              % dont possess ball then move towards ball
         Team \= Op_Team,
