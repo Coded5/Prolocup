@@ -19,6 +19,7 @@ BLUE = (0, 0, 255)
 
 LERP_TIME = 0.2
 
+
 class PrologGameState:
     def __init__(self):
         self.prolog = Prolog()
@@ -35,10 +36,14 @@ class PrologGameState:
         if ball_position is None:
             return
 
+        score_data = self.query('score(Team1, Team2)')
+
         state = {
                 "ball_x": ball_position['X'],
                 "ball_y": ball_position['Y'],
+                "score": score_data
         }
+
 
         players = {}
         for player in list(self.prolog.query('player_state(Team, Id, Role, X, Y)')):
@@ -61,7 +66,9 @@ class PrologGameState:
         self.game_states.append(state)
 
     def step(self):
-        list(self.prolog.query('main_loop(10)'))
+        # list(self.prolog.query('step'))
+        for _ in range(10):
+            list(self.prolog.query('step'))
 
     def query(self, query):
         result = list(self.prolog.query(query))
@@ -81,6 +88,7 @@ def main():
     game = PrologGameState()
 
     pygame.init()
+    font = pygame.font.SysFont("Arial", 32)
     pygame.display.set_caption('Prolocup')
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -114,6 +122,15 @@ def main():
                 (CENTER_OFFSET_X, CENTER_OFFSET_Y, 105 * SCALE, 68 * SCALE)
                 , 3, 1
         )
+
+        team1_score = game.game_states[-1]['score']['Team1']
+        team2_score = game.game_states[-1]['score']['Team2']
+
+        score_text = f"{team1_score} - {team2_score}"
+        text_surf = font.render(score_text, True, WHITE)
+
+        xx = (WIDTH - text_surf.get_width()) // 2
+        screen.blit(text_surf, (xx, 50))
 
         pygame.draw.line(screen, WHITE, field_to_screen((FIELD_WIDTH // 2, 0)), field_to_screen((FIELD_WIDTH // 2, FIELD_HEIGHT)), 3)
 
