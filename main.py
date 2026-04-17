@@ -89,6 +89,7 @@ def main():
 
     pygame.init()
     font = pygame.font.SysFont("Arial", 32)
+    player_font = pygame.font.SysFont("Arial", 18)
     pygame.display.set_caption('Prolocup')
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -98,6 +99,7 @@ def main():
 
     running = True
     autoplay = False
+    current = -1
 
     while running:
         for event in pygame.event.get():
@@ -112,7 +114,11 @@ def main():
                     game.fetch_game_state()
                     lerp_t = 0
                 if event.key == pygame.K_p:
-                    autoplay = True
+                    autoplay = not autoplay
+                if event.key == pygame.K_LEFT:
+                    autoplay = False
+                    current -= 1
+                    lerp_t = 0
 
         screen.fill(FIELD_COLOR)
 
@@ -123,8 +129,8 @@ def main():
                 , 3, 1
         )
 
-        team1_score = game.game_states[-1]['score']['Team1']
-        team2_score = game.game_states[-1]['score']['Team2']
+        team1_score = game.game_states[current]['score']['Team1']
+        team2_score = game.game_states[current]['score']['Team2']
 
         score_text = f"{team1_score} - {team2_score}"
         text_surf = font.render(score_text, True, WHITE)
@@ -176,8 +182,12 @@ def main():
                 )
         )
 
-        prev = game.game_states[-2]
-        curr = game.game_states[-1]
+        # Jank
+        if abs(current) >= len(game.game_states):
+            current = -1
+
+        prev = game.game_states[current-1]
+        curr = game.game_states[current]
 
         ball = (
             lerp(prev['ball_x'], curr['ball_x'], lerp_t),
@@ -187,15 +197,25 @@ def main():
         lerp_t += (1 / (FPS * LERP_TIME))
         lerp_t = min(1, lerp_t)
         
-        for player in game.game_states[-1]['players'].keys():
+        for player in game.game_states[current]['players'].keys():
             curr_player = curr['players'][player]
             prev_player = prev['players'][player]
+
+            
+            player_num_surface = player_font.render(str(curr_player['id']), True, WHITE)
 
             color = RED if curr_player['team'] == 'team1' else BLUE
 
             x = lerp(prev_player['x'], curr_player['x'], lerp_t)
             y = lerp(prev_player['y'], curr_player['y'], lerp_t)
-            pygame.draw.circle(screen, color, field_to_screen((x, y)), 8)
+
+            xx, yy = field_to_screen((x, y))
+
+            pygame.draw.circle(screen, color, field_to_screen((x, y)), 12)
+
+            # 2. Draw the outline (hollow)
+            pygame.draw.circle(screen, (0, 0, 0), field_to_screen((x, y)), 12, width=3)
+            screen.blit(player_num_surface, (xx - 6, yy - 12))
 
 
         pygame.draw.circle(screen, WHITE, field_to_screen(ball), 5) 
