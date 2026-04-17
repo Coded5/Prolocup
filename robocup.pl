@@ -110,18 +110,18 @@ on_same_side(team2, X) :-
     MidFieldX is FieldX // 2,
     X >= MidFieldX.
 
-distance(X1, Y1, X2, Y2, Distance) :-
+distance(X1, Y1, X2, Y2, Distance) :- % calculate distance from position 1 to 2
     DX is X2 - X1,
     DY is Y2 - Y1,
     SUM is DX * DX + DY * DY,
     sqrt(SUM, Distance).
 
-distance_to_goal(Team, Id, Distance):-
+distance_to_goal(Team, Id, Distance):- % calculate distance from player to goal
     player_state(Team, Id, _, X, _),
     goal_target(Team, X_target, _),
     Distance is abs(X - X_target), !.
 
-step_towards(X, Y, TX, TY, NX, NY) :-
+step_towards(X, Y, TX, TY, NX, NY) :- % move to target position with correct direction and prevent from going outside the field
     DX0 is TX - X,
     DY0 is TY - Y,
     sign(DX0, DX),
@@ -132,21 +132,21 @@ step_towards(X, Y, TX, TY, NX, NY) :-
     clamp(X1, 0, MaxX, NX),
     clamp(Y1, 0, MaxY, NY).
 
-advance_ball(X, Y, _, _, 0, X, Y) :- !.
+advance_ball(X, Y, _, _, 0, X, Y) :- !. % move the ball toward target position 
 advance_ball(X, Y, Target_X, Target_Y, Steps, New_X, New_Y):-
     Steps > 0,
     step_towards(X, Y, Target_X, Target_Y, X1, Y1),
     S1 is Steps - 1,
     advance_ball(X1, Y1, Target_X, Target_Y, S1, New_X, New_Y).
 
-update_player(Team, Id, Role, NewX, NewY) :-
+update_player(Team, Id, Role, NewX, NewY) :- % update player position
     field(Width, Height),
     clamp(NewX, 0, Width, XX),
     clamp(NewY, 0, Height, YY),
     retract(player_state(Team, Id, Role, _, _)),
     assertz(player_state(Team, Id, Role, XX, YY)).
 
-update_ball(NewX, NewY) :-
+update_ball(NewX, NewY) :-  % update ball position
     field(Width, Height),
     clamp(NewX, 0, Width, XX),
     clamp(NewY, 0, Height, YY),
@@ -172,7 +172,7 @@ update_score(team2) :-
 
 % Actions
 
-shoot_ball(Team, Id):-
+shoot_ball(Team, Id):-  % shoot the ball toward the goal with random power and variance in y direction
     possession(Team, Id),
     ball_state(BX, BY),
     goal_target(Team, GX, _),
