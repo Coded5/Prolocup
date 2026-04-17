@@ -14,6 +14,7 @@ CENTER_OFFSET_Y = (HEIGHT - (FIELD_HEIGHT * SCALE)) // 2
 FIELD_COLOR = (34, 117, 44)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 BLUE = (0, 0, 255)
 
 LERP_TIME = 0.2
@@ -221,7 +222,6 @@ def main():
 
             highlight = possesion['Team'] == curr_player['team'] and possesion['Id'] == curr_player['id']
 
-            YELLOW = (255, 255, 0)
 
             if highlight:
                 pygame.draw.circle(screen, YELLOW, field_to_screen((x, y)), 15)
