@@ -1,12 +1,24 @@
-# Prolog Robocup
+# Robocup
 
-## Features
+## prerequisite
 
-- Reverse / Pause / Forward
-- Pass, Shoot
-- 5 v 5 (1 Goal, 2 Def, 2 Forward)
-- Random Stat
-    - Speed
-    - Power
-- Record Game
-- Variance in walk direction
+have SWI-Prolog and Python installed
+
+
+## Installation
+run
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## How to run
+```bash
+source .venv/bin/activate
+python main.py
+```
+
+press spacebar for automatic turn simulation
+press right arrow to simulate one turn
+press back arrow to reverse one turn
