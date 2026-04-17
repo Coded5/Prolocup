@@ -19,15 +19,15 @@ win_target(3).
 
 % random stat generator by role
 random_profile(goalkeeper, Speed, Power) :-
-    random_between(1, 3, Speed),
+    random_between(1, 5, Speed),
     random_between(30, 35, Power).
 
 random_profile(defender, Speed, Power) :-
-    random_between(2, 4, Speed),
+    random_between(3, 7, Speed),
     random_between(15, 20, Power).
 
 random_profile(forward, Speed, Power) :-
-    random_between(3, 5, Speed),
+    random_between(5, 9, Speed),
     random_between(25, 30, Power).
 
 % here we initialize the position of players and ball
@@ -186,7 +186,7 @@ shoot_ball(Team, Id):-
     advance_ball(BX, BY, GX, RandomGY, RandomPower, NBX, NBY),
     update_ball(NBX, NBY),
     clear_possession,
-    format('~w player ~w shoots the ball to (~w, ~w) [PWR ~w].~n', [Team, Id, NBX, NBY, RandomPower]).
+    format('~w player ~w shoots the ball to (~2f, ~2f) [PWR ~w].~n', [Team, Id, NBX, NBY, RandomPower]).
 
 dribble_towards_goal(Team, Id) :-
     possession(Team, Id),
@@ -196,7 +196,7 @@ dribble_towards_goal(Team, Id) :-
     advance_ball(X, Y, GX, GY, Speed, NX, NY),
     update_player(Team, Id, Role, NX, NY),
     update_ball(NX, NY),
-    format('~w player ~w dribbles to (~w, ~w).~n', [Team, Id, NX, NY]).
+    format('~w player ~w dribbles to (~2f, ~2f).~n', [Team, Id, NX, NY]).
 
 % ==== Need Implementations ====
 pass_ball(Team, Id, Role) :- 
@@ -234,7 +234,7 @@ clear_ball(Team, Id) :-
     advance_ball(X, Y, GX, Target_Y, RandomPower, BX, BY),
     update_ball(BX, BY),
     clear_possession,
-    format('~w player ~w clears to (~w, ~w).~n', [Team, Id, BX, BY]).
+    format('~w player ~w clears to (~2f, ~2f).~n', [Team, Id, BX, BY]).
 
     
 % ==============================
