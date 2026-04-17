@@ -344,7 +344,7 @@ step :-
     )
     .
 
-ministep([]):- !.
+ministep([_, _, _, _, _]):- !.
 ministep([FirstPlayer | PlayerList]) :-
     check_goal,
     FirstPlayer = (Chosen_Team, Chosen_Id, Chosen_Role),
