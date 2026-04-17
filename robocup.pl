@@ -334,7 +334,6 @@ main_loop:-     % start game with max number of turns, stop when a team wins or 
     main_loop.
 
 step :-
-    check_goal,
     % randomize player
     score(Score1, Score2),
     win_target(Score),
@@ -350,20 +349,24 @@ step :-
         !;
     
         findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),
-        length(Players, Player_Count),
-        random_between(1, Player_Count, Random_Id),
-        nth1(Random_Id, Players, (Chosen_Team, Chosen_Id, Chosen_Role)),
-    
-    
-        %   check possession
-        update_possession(Chosen_Team, Chosen_Id),
-        (
-        Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id), goalkeeper_action(Chosen_Team, Chosen_Id);
-        Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id)  ;
-       Chosen_Role = defender -> defender_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id),defender_action(Chosen_Team, Chosen_Id)
-        )
+        random_permutation(Players, Shuffled),
+        ministep(Shuffled)
     )
     .
+
+ministep([]):- !.
+ministep([FirstPlayer | PlayerList]) :-
+    check_goal,
+    FirstPlayer = (Chosen_Team, Chosen_Id, Chosen_Role),
+    %   check possession
+    update_possession(Chosen_Team, Chosen_Id),
+    (
+    Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id), goalkeeper_action(Chosen_Team, Chosen_Id);
+    Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id)  ;
+    Chosen_Role = defender -> defender_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id),defender_action(Chosen_Team, Chosen_Id)
+    ),
+    ministep(PlayerList).
+
 
 update_possession(Team, Id):-       % when turn start, check if player can possess ball
     ball_state(BX, BY),
