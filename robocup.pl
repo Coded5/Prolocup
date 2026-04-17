@@ -198,7 +198,6 @@ dribble_towards_goal(Team, Id) :-
     update_ball(NX, NY),
     format('~w player ~w dribbles to (~2f, ~2f).~n', [Team, Id, NX, NY]).
 
-% ==== Need Implementations ====
 pass_ball(Team, Id, Role) :- 
     findall((Team, I, Role), (player_state(Team, I, Role, _, _), Id \= I), Players),
     random_member((_, PassId, _), Players),
