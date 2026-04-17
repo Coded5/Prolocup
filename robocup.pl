@@ -6,7 +6,6 @@ use_module(library(random)).
 :- dynamic ball_state/2.
 :- dynamic score/2.
 :- dynamic possession/2.
-:- dynamic last_touch/1.
 :- dynamic is_over/1.
 
 field(105, 68).       % Standard football field dimensions in meter
@@ -14,7 +13,7 @@ goal_range(24, 44).       % Range of y axis for goal
 
 goal_target(team1, 105, 34).       % center of goal for team1 to kick into
 goal_target(team2, 0, 34).         % center of goal for team2 to kick into
-goalkepper_radius(20).              % radius from goal center where goalkeeper stay in
+goalkeeper_radius(20).              % radius from goal center where goalkeeper stay in
 
 win_target(3).     
 
@@ -76,7 +75,6 @@ init_game :-
    retractall(ball_state(_, _)),
    retractall(score(_, _)),
    retractall(possession(_, _)),
-   retractall(last_touch(_)),
    retractall(is_over(_)),
    load_player_positions,
    load_player_stats,
@@ -84,7 +82,6 @@ init_game :-
    assertz(ball_state(BX, BY)),
    assertz(score(0, 0)),
    assertz(possession(none, none)),
-   assertz(last_touch(none)),
    assertz(is_over(0)),
    format('Game initialized.~n').
 
@@ -92,12 +89,10 @@ reset_after_goal :-
     retractall(player_state(_, _, _, _, _)),
     retractall(ball_state(_, _)),
     retractall(possession(_, _)),
-    retractall(last_touch(_)),
     load_player_positions,
     initial_ball(BX, BY),
     assertz(ball_state(BX, BY)),
     assertz(possession(none, none)),
-    assertz(last_touch(none)),
     format('Positions reset after goal.~n').
 
 % Utility predicates (Remove later if these are not used)
@@ -189,7 +184,7 @@ shoot_ball(Team, Id):-
     MaxGY is GY2 + 5,
     random_between(MinGY, MaxGY, RandomGY),
     player_stats(Team, Id, _, Power),
-    MinP is Power // 2,
+    MinP is (Power * 4) // 5,
     random_between(MinP, Power, RandomPower),
     advance_ball(BX, BY, GX, RandomGY, RandomPower, NBX, NBY),
     update_ball(NBX, NBY),
@@ -284,7 +279,7 @@ goalkeeper_action(Team, Id):-
         Team \= Op_Team,
         ball_state(BX, BY),
         distance(GX, GY, BX, BY, G_B_Dist),
-        goalkepper_radius(R),
+        goalkeeper_radius(R),
 
         (   R >= G_B_Dist ->                     
                 move_player(Team, Id, BX, BY)   % ball inside active zone then run to ball
@@ -307,8 +302,6 @@ defender_action(Team, Id) :-
         ; (ball_state(BX, BY), on_same_side(Team, BX)) ->   % if not possess ball but ball on same side, try to run to it
             move_player(Team , Id, BX, BY)
         ; home_position(Team, Id, defender, HX, HY),         % if ball on other side run to wait at half line
-            field(X, _),
-            MidX is X // 2,
             move_player(Team, Id, HX, HY)
     )
     .    
