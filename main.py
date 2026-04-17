@@ -43,6 +43,12 @@ class PrologGameState:
         possession = self.query('possession(Team, Id)')
         over = self.query('is_over(Over)')
 
+        if possession is None:
+            possession = {
+                'Team': None,
+                'Id': None
+            }
+
         if over is not None:
             if over['Over'] == 1:
                 self.winner = "Team 1 wins!"
