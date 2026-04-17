@@ -235,10 +235,8 @@ clear_ball(Team, Id) :-                                         % shoots towards
     clear_possession,
     format('~w player ~w clears to (~2f, ~2f).~n', [Team, Id, BX, BY]).
 
-    
-% ==============================
 
-move_player(Team, Id, TX, TY) :-
+move_player(Team, Id, TX, TY) :-  % move player toward target position
     player_state(Team, Id, Role, X, Y),
     player_stats(Team, Id, Speed, _),
     distance(X, Y, TX, TY, Distance),
@@ -318,11 +316,11 @@ defender_action(Team, Id) :-
     )
     .    
 
-% scoring logic
+% scoring logic (if ball is in the goal range increase the score)
 check_goal :- 
     ball_state(BX, BY),
     goal_range(MinY, MaxY),
-    ((BX == 105, BY >= MinY, BY =< MaxY) ->
+    ((BX == 105, BY >= MinY, BY =< MaxY) -> 
         format('GOAL for team1!~n'),
         update_score(team1),
         reset_after_goal
@@ -340,22 +338,22 @@ main_loop:-     % start game with max number of turns, stop when a team wins or 
 
 step :-
     % randomize player
-    score(Score1, Score2),
+    score(Score1, Score2),  
     win_target(Score),
-    ( (Score1 == Score) ->
+    ( (Score1 == Score) ->              % if Score of team 1 = target score, the game ends
         format('Team 1 wins! ~n'), 
         retractall(is_over(_)),
         assertz(is_over(1)),
         !;
-      (Score2 == Score) ->
+      (Score2 == Score) ->               % if Score of team 2 = target score, the game ends
         format('Team 2 wins! ~n'), 
         retractall(is_over(_)),
         assertz(is_over(2)),
         !;
     
-        findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),
-        random_permutation(Players, Shuffled),
-        ministep(Shuffled)
+        findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players), % find all players
+        random_permutation(Players, Shuffled),                                  % shuffle the order of players
+        ministep(Shuffled)                                                      % call ministep
     )
     .
 
