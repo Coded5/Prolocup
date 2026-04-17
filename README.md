@@ -19,6 +19,6 @@ source .venv/bin/activate
 python main.py
 ```
 
-press spacebar for automatic turn simulation
-press right arrow to simulate one turn
-press back arrow to reverse one turn
+press spacebar for automatic turn simulation  
+press right arrow to simulate one turn   
+press back arrow to reverse one turn  
