@@ -7,13 +7,14 @@ use_module(library(random)).
 :- dynamic score/2.
 :- dynamic possession/2.
 :- dynamic last_touch/1.
+:- dynamic is_over/1.
 
 field(105, 68).       % Standard football field dimensions in meter
 goal_range(24, 44).       % Range of y axis for goal
 
 goal_target(team1, 105, 34).       % center of goal for team1 to kick into
 goal_target(team2, 0, 34).         % center of goal for team2 to kick into
-goalkepper_radius(10).              % radius from goal center where goalkeeper stay in
+goalkepper_radius(20).              % radius from goal center where goalkeeper stay in
 
 win_target(3).     
 
@@ -76,6 +77,7 @@ init_game :-
    retractall(score(_, _)),
    retractall(possession(_, _)),
    retractall(last_touch(_)),
+   retractall(is_over(_)),
    load_player_positions,
    load_player_stats,
    initial_ball(BX, BY),
@@ -83,6 +85,7 @@ init_game :-
    assertz(score(0, 0)),
    assertz(possession(none, none)),
    assertz(last_touch(none)),
+   assertz(is_over(0)),
    format('Game initialized.~n').
 
 reset_after_goal :-
@@ -258,7 +261,7 @@ forward_action(Team, Id):-
         ( Distance =< Power -> 
             shoot_ball(Team, Id)
         ;
-            random_between(0, 3, X),
+            random_between(0, 7, X),
             ( X = 0 ->
                 pass_ball(Team, Id, forward) 
             ;   
@@ -327,34 +330,40 @@ check_goal :-
 
 % main_loop
 main_loop:-     % start game with max number of turns, stop when a team wins or when run out of turns
-    score(Score1, Score2),
-    win_target(Score),
-    ( (Score1 == Score) ->
-        format('Team 1 wins! ~n'),
-        !;
-      (Score2 == Score) ->
-        format('Team 2 wins! ~n'),
-        !;
-        step,
-        main_loop
-    ).
+    step,
+    main_loop.
 
 step :-
     check_goal,
     % randomize player
-    findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),
-    length(Players, Player_Count),
-    random_between(1, Player_Count, Random_Id),
-    nth1(Random_Id, Players, (Chosen_Team, Chosen_Id, Chosen_Role)),
+    score(Score1, Score2),
+    win_target(Score),
+    ( (Score1 == Score) ->
+        format('Team 1 wins! ~n'), 
+        retractall(is_over(_)),
+        assertz(is_over(1)),
+        !;
+      (Score2 == Score) ->
+        format('Team 2 wins! ~n'), 
+        retractall(is_over(_)),
+        assertz(is_over(1)),
+        !;
+    
+        findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),
+        length(Players, Player_Count),
+        random_between(1, Player_Count, Random_Id),
+        nth1(Random_Id, Players, (Chosen_Team, Chosen_Id, Chosen_Role)),
     
     
-    %   check possession
-    update_possession(Chosen_Team, Chosen_Id),
-    (
+        %   check possession
+        update_possession(Chosen_Team, Chosen_Id),
+        (
         Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id), goalkeeper_action(Chosen_Team, Chosen_Id);
         Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id)  ;
        Chosen_Role = defender -> defender_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id),defender_action(Chosen_Team, Chosen_Id)
-    ).
+        )
+    )
+    .
 
 update_possession(Team, Id):-       % when turn start, check if player can possess ball
     ball_state(BX, BY),
