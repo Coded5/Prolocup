@@ -18,6 +18,9 @@ BLUE = (0, 0, 255)
 
 LERP_TIME = 0.2
 
+# Reverse / Forward
+# Possession
+# 
 
 class PrologGameState:
     def __init__(self):
@@ -36,11 +39,15 @@ class PrologGameState:
             return
 
         score_data = self.query('score(Team1, Team2)')
+        possession = self.query('possession(Team, Id)')
+
+        print(possession)
 
         state = {
                 "ball_x": ball_position['X'],
                 "ball_y": ball_position['Y'],
-                "score": score_data
+                "score": score_data,
+                "possession": possession
         }
 
 
@@ -195,7 +202,9 @@ def main():
 
         lerp_t += (1 / (FPS * LERP_TIME))
         lerp_t = min(1, lerp_t)
-        
+
+        possesion = game.game_states[current]['possession']
+
         for player in game.game_states[current]['players'].keys():
             curr_player = curr['players'][player]
             prev_player = prev['players'][player]
@@ -209,6 +218,13 @@ def main():
             y = lerp(prev_player['y'], curr_player['y'], lerp_t)
 
             xx, yy = field_to_screen((x, y))
+
+            highlight = possesion['Team'] == curr_player['team'] and possesion['Id'] == curr_player['id']
+
+            YELLOW = (255, 255, 0)
+
+            if highlight:
+                pygame.draw.circle(screen, YELLOW, field_to_screen((x, y)), 15)
 
             pygame.draw.circle(screen, color, field_to_screen((x, y)), 12)
 
