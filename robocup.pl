@@ -46,9 +46,6 @@ home_position(team2, 5, forward, 65, 43).
 
 initial_ball(52, 34).       % middle of the field
 
-opponent(team1, team2).
-opponent(team2, team1).
-
 % load only player positions
 load_player_positions :-
     forall(
