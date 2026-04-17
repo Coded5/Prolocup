@@ -20,8 +20,6 @@ BLUE = (0, 0, 255)
 LERP_TIME = 0.2
 
 # Reverse / Forward
-# Possession
-# 
 
 class PrologGameState:
     def __init__(self):
@@ -41,8 +39,6 @@ class PrologGameState:
 
         score_data = self.query('score(Team1, Team2)')
         possession = self.query('possession(Team, Id)')
-
-        print(possession)
 
         state = {
                 "ball_x": ball_position['X'],
@@ -73,9 +69,7 @@ class PrologGameState:
         self.game_states.append(state)
 
     def step(self):
-        # list(self.prolog.query('step'))
-        for _ in range(10):
-            list(self.prolog.query('step'))
+        list(self.prolog.query('step'))
 
     def query(self, query):
         result = list(self.prolog.query(query))
@@ -108,6 +102,9 @@ def main():
     autoplay = False
     current = -1
 
+    prev = game.game_states[current-1]
+    curr = game.game_states[current]
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -116,16 +113,33 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                if event.key == pygame.K_k:
-                    game.step()
-                    game.fetch_game_state()
-                    lerp_t = 0
-                if event.key == pygame.K_p:
+                # if event.key == pygame.K_k:
+                #     game.step()
+                #     game.fetch_game_state()
+                #     lerp_t = 0
+                if event.key == pygame.K_SPACE:
                     autoplay = not autoplay
+
                 if event.key == pygame.K_LEFT:
                     autoplay = False
                     current -= 1
                     lerp_t = 0
+                    prev = curr
+                    curr = game.game_states[current]
+                if event.key == pygame.K_RIGHT:
+                    autoplay = False
+
+                    if current != -1:
+                        current += 1
+                    else:
+                        game.step()
+                        game.fetch_game_state()
+
+                    prev = curr
+                    curr = game.game_states[current]
+
+                    lerp_t = 0
+
 
         screen.fill(FIELD_COLOR)
 
@@ -193,8 +207,9 @@ def main():
         if abs(current) >= len(game.game_states):
             current = -1
 
-        prev = game.game_states[current-1]
-        curr = game.game_states[current]
+        # prev = game.game_states[current-1]
+        # curr = game.game_states[current]
+
 
         ball = (
             lerp(prev['ball_x'], curr['ball_x'], lerp_t),
@@ -239,6 +254,9 @@ def main():
         if lerp_t >= 1 and autoplay:
             game.step()
             game.fetch_game_state()
+
+            prev = curr
+            curr = game.game_states[current]
             lerp_t = 0
         
         clock.tick(FPS)
