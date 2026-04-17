@@ -173,6 +173,9 @@ def main():
         score_text = f"{team1_score} - {team2_score}"
         text_surf = font.render(score_text, True, WHITE)
 
+        control_text_surf = player_font.render("Left - Right Arrow to reverse / forward. Space to autoplay", True, WHITE)
+        screen.blit(control_text_surf, (0, HEIGHT - 20))
+
         xx = (WIDTH - text_surf.get_width()) // 2
         screen.blit(text_surf, (xx, 50))
 
