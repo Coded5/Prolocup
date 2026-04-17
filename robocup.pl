@@ -233,6 +233,7 @@ clear_ball(Team, Id) :-
     random_between(0, Field_Y, Target_Y),
     advance_ball(X, Y, GX, Target_Y, RandomPower, BX, BY),
     update_ball(BX, BY),
+    clear_possession,
     format('~w player ~w clears to (~w, ~w).~n', [Team, Id, BX, BY]).
 
     
