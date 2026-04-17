@@ -9,7 +9,7 @@ use_module(library(random)).
 :- dynamic last_touch/1.
 
 field(105, 68).       % Standard football field dimensions in meter
-goal_range(30, 38).       % Range of y axis for goal
+goal_range(24, 44).       % Range of y axis for goal
 
 goal_target(team1, 105, 34).       % center of goal for team1 to kick into
 goal_target(team2, 0, 34).         % center of goal for team2 to kick into
@@ -20,15 +20,15 @@ win_target(1).      % number of goals to win - temporarily 1
 % random stat generator by role
 random_profile(goalkeeper, Speed, Power) :-
     random_between(1, 3, Speed),
-    random_between(3, 4, Power).
+    random_between(30, 35, Power).
 
 random_profile(defender, Speed, Power) :-
     random_between(2, 4, Speed),
-    random_between(1, 2, Power).
+    random_between(15, 20, Power).
 
 random_profile(forward, Speed, Power) :-
     random_between(3, 5, Speed),
-    random_between(3, 4, Power).
+    random_between(25, 30, Power).
 
 % here we initialize the position of players and ball
 
@@ -208,18 +208,19 @@ pass_ball(Team, Id, Role) :-
     findall((Team, I, Role), (player_state(Team, I, Role, _, _), Id \= I), Players),
     random_member((_, PassId, _), Players),
 
-    player_state(Team, Id, Role, X1, Y1),
-    player_stats(Team, Id, _Speed, Power),
+    player_state(Team, Id, _, X1, Y1),
+    player_stats(Team, Id, _, Power),
 
     player_state(Team, PassId, Role, X2, Y2),
 
     distance(X1, Y1, X2, Y2, Distance),
-
+    random_between(-5, 5, RandomY),
     (
         Distance =< Power -> 
             update_ball(X2, Y2)
-        ;
-            advance_ball(X1, Y1, X2, Y2, Power, BX, BY),
+        ;   
+            Y2_inc is Y2 + RandomY,
+            advance_ball(X1, Y1, X2, Y2_inc, Power, BX, BY),
             update_ball(BX, BY)
     ),
     retractall(possession(_, _)),
@@ -235,13 +236,15 @@ move_player(Team, Id, TX, TY) :-
     player_state(Team, Id, Role, X, Y),
     player_stats(Team, Id, Speed, _),
     distance(X, Y, TX, TY, Distance),
+    random_between(-2, 2, RandomY),
 
     ( Distance =< Speed -> 
+
         update_player(Team, Id, Role, TX, TY) ;
 
         % move toward point (TX, TY) for (Speed) units
         XX is X + (TX - X) / Distance * Speed,
-        YY is Y + (TY - Y) / Distance * Speed,
+        YY is Y + (TY - Y + RandomY) / Distance * Speed,
 
         update_player(Team, Id, Role, XX, YY)
     ).
@@ -251,10 +254,11 @@ move_player(Team, Id, TX, TY) :-
 forward_action(Team, Id):-
     ( possession(Team, Id) ->
         distance_to_goal(Team, Id, Distance),
-        ( Distance =< 25 -> 
+        player_stats(Team, Id, _, Power),
+        ( Distance =< Power -> 
             shoot_ball(Team, Id)
         ;
-            random_between(0, 1, X),
+            random_between(0, 3, X),
             ( X = 0 ->
                 pass_ball(Team, Id, forward) 
             ;   
@@ -303,7 +307,8 @@ defender_action(Team, Id) :-
             field(X, _),
             MidX is X // 2,
             move_player(Team, Id, HX, HY)
-    ).    
+    )
+    .    
 
 % scoring logic
 check_goal :- 
@@ -347,9 +352,9 @@ step :-
     %   check possession
     update_possession(Chosen_Team, Chosen_Id),
     (
-        Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id);
-        Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id);
-        Chosen_Role = defender -> defender_action(Chosen_Team, Chosen_Id)
+        Chosen_Role = goalkeeper -> goalkeeper_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id), goalkeeper_action(Chosen_Team, Chosen_Id);
+        Chosen_Role = forward -> forward_action(Chosen_Team, Chosen_Id)  ;
+       Chosen_Role = defender -> defender_action(Chosen_Team, Chosen_Id), update_possession(Chosen_Team, Chosen_Id),defender_action(Chosen_Team, Chosen_Id)
     ).
 
 update_possession(Team, Id):-       % when turn start, check if player can possess ball
@@ -359,5 +364,6 @@ update_possession(Team, Id):-       % when turn start, check if player can posse
     D < 1,
     retractall(possession(_,_)),
     assertz(possession(Team, Id)),
+    format('~w player ~w possessed the ball.~n', [Team, Id]),
     !.
 update_possession(_,_).
