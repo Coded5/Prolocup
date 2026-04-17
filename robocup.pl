@@ -338,7 +338,7 @@ step :-
       (Score2 == Score) ->
         format('Team 2 wins! ~n'), 
         retractall(is_over(_)),
-        assertz(is_over(1)),
+        assertz(is_over(2)),
         !;
     
         findall((Team, Id, Role), player_state(Team, Id, Role, _, _), Players),

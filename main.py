@@ -28,6 +28,8 @@ class PrologGameState:
         list(self.prolog.query('init_game'))
 
         self.game_states = []
+        self.game_over = False
+        self.winner = ""
         self.fetch_game_state()
         self.fetch_game_state()
 
@@ -39,6 +41,15 @@ class PrologGameState:
 
         score_data = self.query('score(Team1, Team2)')
         possession = self.query('possession(Team, Id)')
+        over = self.query('is_over(Over)')
+
+        if over is not None:
+            if over['Over'] == 1:
+                self.winner = "Team 1 wins!"
+                self.game_over = True
+            elif over['Over'] == 2:
+                self.winner = "Team 2 wins!"
+                self.game_over = True
 
         state = {
                 "ball_x": ball_position['X'],
@@ -69,6 +80,11 @@ class PrologGameState:
         self.game_states.append(state)
 
     def step(self):
+        if self.game_over:
+            self.game_over = False
+            self.winner = ""
+            list(self.prolog.query('init_game'))
+
         list(self.prolog.query('step'))
 
     def query(self, query):
@@ -119,6 +135,7 @@ def main():
                 #     lerp_t = 0
                 if event.key == pygame.K_SPACE:
                     autoplay = not autoplay
+
 
                 if event.key == pygame.K_LEFT:
                     autoplay = False
@@ -258,6 +275,16 @@ def main():
             prev = curr
             curr = game.game_states[current]
             lerp_t = 0
+
+        if game.game_over:
+            win_bg = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            win_bg.fill((0, 0, 0, 128))
+            screen.blit(win_bg, (0, 0))
+            win_surf = font.render(f"{game.winner}", True, YELLOW)
+            screen.blit(win_surf, win_surf.get_rect(center=(WIDTH//2, HEIGHT//2)))
+
+            autoplay = False
+
         
         clock.tick(FPS)
         pygame.display.flip()
