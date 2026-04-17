@@ -1,4 +1,3 @@
-from pygame.cursors import ball
 from pyswip import Prolog
 import pygame
 
