@@ -188,7 +188,7 @@ shoot_ball(Team, Id):-
     clear_possession,
     format('~w player ~w shoots the ball to (~2f, ~2f) [PWR ~w].~n', [Team, Id, NBX, NBY, RandomPower]).
 
-dribble_towards_goal(Team, Id) :-
+dribble_towards_goal(Team, Id) :- % dribble toward the goal with step equal speed
     possession(Team, Id),
     player_state(Team, Id, Role, X, Y),
     player_stats(Team, Id, Speed, _),
@@ -198,7 +198,7 @@ dribble_towards_goal(Team, Id) :-
     update_ball(NX, NY),
     format('~w player ~w dribbles to (~2f, ~2f).~n', [Team, Id, NX, NY]).
 
-pass_ball(Team, Id, Role) :- 
+pass_ball(Team, Id, Role) :- % player from Team and Id pass the ball to the random player whose role equals Role on the same team
     findall((Team, I, Role), (player_state(Team, I, Role, _, _), Id \= I), Players),
     random_member((_, PassId, _), Players),
 
@@ -258,22 +258,22 @@ move_player(Team, Id, TX, TY) :-
 % Forward
 
 forward_action(Team, Id):-
-    ( possession(Team, Id) ->
+    ( possession(Team, Id) ->                   % if possess ball then choose the actions
         distance_to_goal(Team, Id, Distance),
         player_stats(Team, Id, _, Power),
-        ( Distance =< Power -> 
+        ( Distance =< Power ->                  % if have enough power then shoot to the goal
             shoot_ball(Team, Id)
         ;
-            random_between(0, 7, X),
+            random_between(0, 7, X),            % random change between pass_ball and dribble toward goal
             ( X = 0 ->
-                pass_ball(Team, Id, forward) 
+                pass_ball(Team, Id, forward)    % pass ball to forward role
             ;   
-                dribble_towards_goal(Team, Id)
+                dribble_towards_goal(Team, Id)  % dribble toward the goal
             )
         )
     ;
-        ball_state(BX, BY),
-        move_player(Team, Id, BX, BY)
+        ball_state(BX, BY),                     
+        move_player(Team, Id, BX, BY)           % else move player toward the ball
     ).
 
 % Goalkeeper
