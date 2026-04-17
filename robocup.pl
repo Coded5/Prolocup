@@ -221,16 +221,16 @@ pass_ball(Team, Id, Role) :-
     assertz(possession(Team, PassId)),
     format('~w player ~w passes to ~w.~n', [Team, Id, PassId]).
 
-clear_ball(Team, Id) :-
-    possession(Team, Id),
-    player_state(Team, Id, _, X, Y),
+clear_ball(Team, Id) :-                                         % shoots towards other team goal with random y coordinate
+    possession(Team, Id),                                       % if player has possession
+    player_state(Team, Id, _, X, Y),    
     player_stats(Team, Id, _, Power),
     MinP is (Power * 4) // 5,
-    random_between(MinP, Power, RandomPower),
+    random_between(MinP, Power, RandomPower),                   % random power
     goal_target(Team, GX, _),
     field(_,Field_Y),
-    random_between(0, Field_Y, Target_Y),
-    advance_ball(X, Y, GX, Target_Y, RandomPower, BX, BY),
+    random_between(0, Field_Y, Target_Y),                       % random y
+    advance_ball(X, Y, GX, Target_Y, RandomPower, BX, BY),      
     update_ball(BX, BY),
     clear_possession,
     format('~w player ~w clears to (~2f, ~2f).~n', [Team, Id, BX, BY]).
