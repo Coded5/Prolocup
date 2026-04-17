@@ -222,7 +222,18 @@ pass_ball(Team, Id, Role) :-
     assertz(possession(Team, PassId)),
     format('~w player ~w passes to ~w.~n', [Team, Id, PassId]).
 
-
+clear_ball(Team, Id) :-
+    possession(Team, Id),
+    player_state(Team, Id, _, X, Y),
+    player_stats(Team, Id, _, Power),
+    MinP is (Power * 4) // 5,
+    random_between(MinP, Power, RandomPower),
+    goal_target(Team, GX, _),
+    field(_,Field_Y),
+    random_between(0, Field_Y, Target_Y),
+    advance_ball(X, Y, GX, Target_Y, RandomPower, BX, BY),
+    update_ball(BX, BY),
+    format('~w player ~w clears to (~w, ~w).~n', [Team, Id, BX, BY]).
 
     
 % ==============================
@@ -293,9 +304,13 @@ goalkeeper_action(Team, Id):-
 
 defender_action(Team, Id) :-
     (
-        possession(Team, Id) ->                             % if possess the ball then try to pass to forward
-        pass_ball(Team, Id, forward)
-
+        possession(Team, Id) ->                             % if possess the ball then pass to forward or clear
+        random_between(0, 1, X),
+            ( X = 0 ->
+                pass_ball(Team, Id, forward) 
+            ;   
+                clear_ball(Team, Id)
+            )
         ; (ball_state(BX, BY), on_same_side(Team, BX)) ->   % if not possess ball but ball on same side, try to run to it
             move_player(Team , Id, BX, BY)
         ; home_position(Team, Id, defender, HX, HY),         % if ball on other side run to wait at half line
@@ -362,7 +377,7 @@ update_possession(Team, Id):-       % when turn start, check if player can posse
     ball_state(BX, BY),
     player_state(Team, Id, _, PX, PY),
     distance(PX, PY, BX, BY, D),
-    D < 1,
+    D < 0.5,
     retractall(possession(_,_)),
     assertz(possession(Team, Id)),
     format('~w player ~w possessed the ball.~n', [Team, Id]),
