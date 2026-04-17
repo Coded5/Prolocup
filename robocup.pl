@@ -359,6 +359,7 @@ step :-
     )
     .
 
+% recursive predicate for half of all players to perform their action
 ministep([_, _, _, _, _]):- !.
 ministep([FirstPlayer | PlayerList]) :-
     check_goal,
